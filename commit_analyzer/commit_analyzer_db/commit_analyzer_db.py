@@ -14,26 +14,6 @@ cursor = conn.cursor()
 
 
 def init_db_create_tables():
-    commit_db_path = "commits.db"
-    conn = sqlite3.connect(commit_db_path)
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-    CREATE TABLE Commits (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sha VARCHAR(40) UNIQUE NOT NULL,
-        date DATETIME NOT NULL,
-        message TEXT NOT NULL,
-        author_id INTEGER NOT NULL,
-        repo_owner VARCHAR(100) NOT NULL,
-        repo_name VARCHAR(100) NOT NULL,
-        FOREIGN KEY (author_id) REFERENCES Authors(id) ON DELETE CASCADE,
-        INDEX idx_date (date),
-        INDEX idx_author (author_id)
-    )
-    """
-    )
-
     cursor.execute(
         """
     CREATE TABLE IF NOT EXISTS Authors(
@@ -46,7 +26,21 @@ def init_db_create_tables():
     )
     cursor.execute(
         """
-    CREATE TABLE MonthlySummary,
+    CREATE TABLE IF NOT EXISTS Commits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sha VARCHAR(40) UNIQUE NOT NULL,
+        date DATETIME NOT NULL,
+        message TEXT NOT NULL,
+        author_id INTEGER NOT NULL,
+        repo_owner VARCHAR(100) NOT NULL,
+        repo_name VARCHAR(100) NOT NULL,
+        FOREIGN KEY (author_id) REFERENCES Authors(id) ON DELETE CASCADE
+    )
+    """
+    )
+    cursor.execute(
+        """
+    CREATE TABLE IF NOT EXISTS MonthlySummary(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         month INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
         year INTEGER NOT NULL CHECK (year > 1900),
@@ -57,12 +51,21 @@ def init_db_create_tables():
         average_message_length REAL DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(month, year, repo_owner, repo_name)
-"""
+    )
+    """
     )
     conn.commit()
 
 
-def load_monthly_summary(repo_owner, repo_name):
+def get_commit_data(repo_owner, repo_name):
+    github_url = (
+        f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits?per_page=100"
+    )
+    response = requests.get(github_url).json()
+    return json.dumps(response, indent=4)
+
+
+def get_monthly_summary(repo_owner, repo_name):
     github_url = (
         f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits?per_page=100"
     )
@@ -98,6 +101,33 @@ def load_monthly_summary(repo_owner, repo_name):
     month_summary.sort(
         key=lambda x: datetime.strptime(x["date"], "%m-%Y"), reverse=True
     )
+    return month_summary
+
+
+def load_commit_data(repo_owner, repo_name):
+    github_url = (
+        f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits?per_page=100"
+    )
+    response = requests.get(github_url).json()
+    for each in response:
+        commit_date = datetime.strptime(
+            each["commit"]["author"]["date"], "%Y-%m-%dT%H:%M:%SZ"
+        )
+        # month_year = f"{commit_date.month:02d}-{commit_date.year}"
+        name = each["commit"]["author"]["name"]
+        email = each["commit"]["author"]["email"]
+        msg = each["commit"]["message"]
+        sha = each["sha"]
+        insert_commit(
+            sha,
+            datetime.strftime(commit_date, "%Y-%m-%dT%H:%M:%SZ"),
+            msg,
+            name,
+            email,
+            repo_owner,
+            repo_name,
+        )
+    conn.commit()
 
 
 def insert_author(name, email=None):
@@ -137,5 +167,7 @@ def post_to_webhook(data):
 if __name__ == "__main__":
     repo_owner = "ahvar"
     repo_name = "gene_annotator"
-    cursor = init_db_create_tables()
-    load_monthly_summary(repo_owner, repo_name)
+    print(get_commit_data(repo_owner, repo_name))
+    init_db_create_tables()
+    # print(json.dumps(get_monthly_summary(repo_owner, repo_name), indent=4))
+    load_commit_data(repo_owner, repo_name)
