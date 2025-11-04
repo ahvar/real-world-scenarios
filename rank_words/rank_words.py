@@ -41,12 +41,11 @@ def calculate_word_value(word) -> int:
 
 
 if __name__ == "__main__":
-    output = []
-    word_count = int(sys.stdin.readline())
-    for count in range(word_count):
-        word = sys.stdin.readline()
-        if calculate_word_value(word.lower().strip()) == 100:
-            output.append(word.strip())
-    output.sort(key=len)
-    for word in output:
-        print(word)
+    input_count = int(sys.stdin.readline())
+    words = []
+    for count in range(input_count):
+        word = sys.stdin.readline().strip().lower()
+        if calculate_word_value(word) == 100:
+            words.append(word)
+    words.sort(key=len)
+    print(words)
