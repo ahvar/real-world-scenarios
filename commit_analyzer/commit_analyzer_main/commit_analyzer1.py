@@ -1,49 +1,44 @@
 """ """
 
 import requests
-import statistics
 import json
+import statistics
 from datetime import datetime
-from pprint import PrettyPrinter
-
-pp = PrettyPrinter(indent=4)
+from pathlib import Path
 
 repo_owner = "ahvar"
-repo_name = "gene_annotator"
-github_url = (
-    f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits?per_page=100"
-)
+repo_name = "data-structures-algorithms"
+url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits?per_page=100"
 
-response = requests.get(github_url).json()
+response = requests.get(url).json()
+# Path("commits_data.json").write_text(json.dumps(response, indent=4))
 monthly_commits = {}
-for each in response:
-    commit_date = datetime.strptime(
-        each["commit"]["author"]["date"], "%Y-%m-%dT%H:%M:%SZ"
+for obj in response:
+
+    date, message, author = (
+        obj["commit"]["author"]["date"],
+        obj["commit"]["message"],
+        obj["commit"]["author"]["name"],
     )
-    month_year = f"{commit_date.month:02d}-{commit_date.year}"
-    if month_year in monthly_commits:
-        monthly_commits[month_year]["messages"].append(each["commit"]["message"])
-        monthly_commits[month_year]["authors"].append(each["commit"]["author"]["name"])
-    else:
-        monthly_commits[month_year] = {
-            "messages": [each["commit"]["message"]],
-            "authors": [each["commit"]["author"]["name"]],
+    dt = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
+    month, year = dt.month, dt.year
+    if f"{month}-{year}" not in monthly_commits:
+        monthly_commits[f"{month:02d}-{year}"] = {
+            "commit_count": 1,
+            "messages": [len(message)],
+            "authors": [author],
         }
-month_summary = []
-for month_year, data in monthly_commits.items():
-    month_summary.append(
+    else:
+        monthly_commits[f"{month}-{year}"]["commit_count"] += 1
+        monthly_commits[f"{month}-{year}"]["message_lengths"].append(len(message))
+        monthly_commits[f"{month}-{year}"]["authors"].append(author)
+output = []
+for month, data in monthly_commits.items():
+    output.append(
         {
-            "date": month_year,
-            "commit_count": len(data["messages"]),
-            "average_message_length": round(
-                statistics.mean([len(msg) for msg in data["messages"]])
-            ),
+            "commit_count": data["commit_count"],
+            "date": month,
+            "average_message_length": statistics.mean(data["messages"]),
             "unique_authors": len(set(data["authors"])),
         }
     )
-month_summary.sort(key=lambda x: datetime.strptime(x["date"], "%m-%Y"), reverse=True)
-response = requests.post(
-    "https://webhook.site/4823ab23-3b35-4d63-ac29-27a6996c7f1f", json=month_summary
-)
-response.raise_for_status()
-print(f"Data sent successfully: {response.status_code}")

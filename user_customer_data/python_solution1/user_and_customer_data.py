@@ -70,34 +70,33 @@ def get_all_users() -> list[tuple]:
 #         "created_at": str,           # The date on which the customer entry was created
 #     }, ...
 # ]
-
 import json
 
-all_customer_data = []
+output = []
 for customer in get_all_customers():
     id, name, created_at = customer
-    customer_data = {
+    cust_user_obj = {
         "customer_name": name,
-        "created_at": created_at,
         "active_user_count": 0,
         "inactive_user_count": 0,
         "active_users": [],
         "inactive_users": [],
-        "newest_user": None,
+        "newest_user": "",
+        "created_at": created_at,
     }
-    most_recent_user = ""
+    most_recent = ""
     for user in get_all_users():
         username, customer_id, active, user_created_at = user
-        if id == customer_id:
+        if customer_id == id:
             if active:
-                customer_data["active_user_count"] += 1
-                customer_data["active_users"].append(username)
+                cust_user_obj["active_user_count"] += 1
+                cust_user_obj["active_users"].append(username)
             else:
-                customer_data["inactive_user_count"] += 1
-                customer_data["inactive_users"].append(username)
-            if user_created_at > most_recent_user:
-                customer_data["newest_user"] = username
-                most_recent_user = user_created_at
-    all_customer_data.append(customer_data)
+                cust_user_obj["inactive_user_count"] += 1
+                cust_user_obj["inactive_users"].append(username)
+            if user_created_at > most_recent:
+                cust_user_obj["newest_user"] = username
+                most_recent = user_created_at
+    output.append(cust_user_obj)
 
-print(json.dumps(all_customer_data, indent=4))
+print(json.dumps(output, indent=4))
