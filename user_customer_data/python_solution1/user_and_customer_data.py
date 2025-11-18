@@ -69,34 +69,77 @@ def get_all_users() -> list[tuple]:
 #         "newest_user": str,          # The username of the most recently created user
 #         "created_at": str,           # The date on which the customer entry was created
 #     }, ...
-# ]
 import json
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.sql import func
+
+Base = declarative_base()
+
+
+class Customer(Base):
+    __tablename__ = "customers"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    created_at = Column(String, nullable=False)
+    users = relationship("User", back_populates="customer")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String, nullable=False)
+    customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
+    active = Column(Boolean, nullable=False)
+    created_at = Column(String, nullable=False)
+    customer = relationship("Customer", back_populates="users")
+
+
+def setup_database():
+    engine = create_engine("sqlite://:memory:", echo=False)
+
+    Base.metadata.create_all(engine)
+
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    return engine, session
+
+
+def populate_database(session):
+    for customer_data in get_all_customers():
+        id, name, created_at = customer_data
+        customer = Customer(id=id, name=name, created_at=created_at)
+        session.add(customer)
+
+    users_data = get_all_users()
+
 
 output = []
 for customer in get_all_customers():
     id, name, created_at = customer
-    cust_user_obj = {
-        "customer_name": name,
+    user_obj = {
+        "name": name,
+        "created_at": created_at,
         "active_user_count": 0,
         "inactive_user_count": 0,
         "active_users": [],
         "inactive_users": [],
         "newest_user": "",
-        "created_at": created_at,
     }
-    most_recent = ""
+    newest = ""
     for user in get_all_users():
         username, customer_id, active, user_created_at = user
-        if customer_id == id:
+        if id == customer_id:
             if active:
-                cust_user_obj["active_user_count"] += 1
-                cust_user_obj["active_users"].append(username)
+                user_obj["active_user_count"] += 1
+                user_obj["active_users"].append(username)
             else:
-                cust_user_obj["inactive_user_count"] += 1
-                cust_user_obj["inactive_users"].append(username)
-            if user_created_at > most_recent:
-                cust_user_obj["newest_user"] = username
-                most_recent = user_created_at
-    output.append(cust_user_obj)
-
+                user_obj["inactive_user_count"] += 1
+                user_obj["inactive_users"].append(username)
+            if user_created_at > newest:
+                user_obj["created_at"] = username
+    output.append(user_obj)
 print(json.dumps(output, indent=4))
