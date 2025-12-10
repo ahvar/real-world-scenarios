@@ -1,0 +1,4 @@
+1. initialize a dict of lists. populate with user data, inserting customer_ids as keys and a list of tuples storing remaining user data as values. That is, each tuple element in the list has the username, active status, and the date the user was created
+2. Iterate the customer data and use the customer id to get the list of user data. Iterate the user list and generate a list of active users. Do the same for inactive users. Hint: list comprehensions
+4. Iterate the user list once more and get the most recently created user. Hint: you can use a lambda expression here in a dict comprehension
+5. append a dict with specified output format to the list of results
