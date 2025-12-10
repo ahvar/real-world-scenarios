@@ -1,48 +1,40 @@
-import requests
-import json
-import statistics
 from datetime import datetime
+from collections import defaultdict
+import requests
+import statistics
+import json
 
 repo_owner = "ahvar"
 repo_name = "data-structures-algorithms"
-url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits?per_page=100"
 
-response = requests.get(url).json()
-# print(json.dumps(response, indent=4))
-monthly_commits = {}
-for commit_obj in response:
-    cdate, cauthor, cmsg = (
-        commit_obj["commit"]["author"]["date"],
-        commit_obj["commit"]["author"]["name"],
-        commit_obj["commit"]["message"],
+url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits?per_page=100"
+commit_raw = requests.get(url).json()
+monthly_commits = defaultdict(list)
+for com_obj in commit_raw:
+    date_str, message, author = (
+        com_obj["commit"]["author"]["date"],
+        com_obj["commit"]["message"],
+        com_obj["commit"]["author"]["name"],
     )
 
-    dt = datetime.strptime(cdate, "%Y-%m-%dT%H:%M:%SZ")
-    month, year = dt.month, dt.year
-    month_key = f"{month:02d}-{year}"
-    if month_key not in monthly_commits:
+    dt = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
+    month_year = f"{dt.month}-{dt.year}"
+    monthly_commits[month_year].append(
+        {"date": date_str, "message": message, "author": author}
+    )
 
-        monthly_commits[month_key] = [
-            {"date": cdate, "author": cauthor, "msg_len": len(cmsg)}
-        ]
-    else:
-        monthly_commits[month_key].append(
-            {"date": cdate, "author": cauthor, "msg_len": len(cmsg)}
-        )
-result = []
-for month_year, cdata in monthly_commits.items():
-    total = len(cdata)
-    msg_lens = [obj["msg_len"] for obj in cdata]
-    avg_msg_len = statistics.mean(msg_lens)
-    unique_author = len(set([obj["author"] for obj in cdata]))
-    result.append(
+output = []
+for month, commits in monthly_commits:
+    commit_count = len(commits)
+    avg_msg_len = statistics.mean([len(c["message"]) for c in commits])
+    unique_authors = [len(set(c["author"])) for c in commits]
+    output.append(
         {
-            "commit_count": total,
+            "date": month,
+            "commit_count": commit_count,
             "average_message_length": avg_msg_len,
-            "unique_author": unique_author,
-            "date": month_year,
+            "unique_authors": unique_authors,
         }
     )
 
-
-print(json.dumps(result, indent=4))
+print(json.dumps(commit_raw, indent=4))
