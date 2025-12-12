@@ -57,31 +57,37 @@ def get_all_users() -> list[tuple]:
     ]
 
 
-import json
+from flask import render_template
 from collections import defaultdict
+from . import app
+import json
 
-users_by_customer = defaultdict(list)
-for username, customer_id, active, created_at in get_all_users():
-    users_by_customer[customer_id].append((username, active, created_at))
 
-output = []
-for id, name, cust_created in get_all_customers():
-    active = [u for u, a, ca in users_by_customer[id] if a]
-    inactive = [u for u, a, ca, in users_by_customer[id] if not a]
-    newest_user = (
-        max(users_by_customer[id], key=lambda x: x[2])[0]
-        if users_by_customer[id]
-        else None
-    )
-    output.append(
-        {
-            "customer_name": name,  # The name of the customer
-            "active_user_count": len(active),  # The number of active users
-            "inactive_user_count": len(inactive),  # The number of inactive users
-            "active_users": active,  # A list of usernames for active users
-            "inactive_users": inactive,  # A list of usernames for inactive users
-            "newest_user": newest_user,  # The username of the most recently created user
-            "created_at": cust_created,  # The date on which the customer entry was created
-        }
-    )
-print(json.dumps(output, indent=4))
+@app.route("/")
+@app.route("/index")
+def index():
+    users_by_customer = defaultdict(list)
+    for username, customer_id, active, created_at in get_all_users():
+        users_by_customer[customer_id].append((username, active, created_at))
+
+    output = []
+    for id, name, cust_created in get_all_customers():
+        active = [u for u, a, ca in users_by_customer[id] if a]
+        inactive = [u for u, a, ca, in users_by_customer[id] if not a]
+        newest_user = (
+            max(users_by_customer[id], key=lambda x: x[2])[0]
+            if users_by_customer[id]
+            else None
+        )
+        output.append(
+            {
+                "customer_name": name,  # The name of the customer
+                "active_user_count": len(active),  # The number of active users
+                "inactive_user_count": len(inactive),  # The number of inactive users
+                "active_users": active,  # A list of usernames for active users
+                "inactive_users": inactive,  # A list of usernames for inactive users
+                "newest_user": newest_user,  # The username of the most recently created user
+                "created_at": cust_created,  # The date on which the customer entry was created
+            }
+        )
+    return render_template("index.html", output=output)
