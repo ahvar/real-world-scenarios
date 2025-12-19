@@ -58,31 +58,31 @@ def get_all_users() -> list[tuple]:
 
 
 from collections import defaultdict
-import json
 
-users_by_customer = defaultdict(list)
+
+cust_to_user = defaultdict(list)
 for username, customer_id, active, created_at in get_all_users():
-    users_by_customer[customer_id].append((username, active, created_at))
-result = []
-for id, name, cust_created_at in get_all_customers():
-    active = [name for u, c, a, ca in users_by_customer[id] if a]
-    inactive = [name for u, c, a, ca in users_by_customer[id] if not a]
-    acount = len(active)
-    inacount = len(inactive)
+    cust_to_user.append((username, active, created_at))
+output = []
+for id, name, cust_created in get_all_customers():
+    active = [u for u, a, ca in cust_to_user[id] if a]
+    inactive = [u for u, a, ca in cust_to_user[id] if not a]
+    active_count = len(active)
+    inactive_count = len(inactive)
     newest_user = (
-        max(users_by_customer[id], key=lambda x: x[2])[0]
-        if users_by_customer[id]
-        else None
+        max(cust_to_user[id], key=lambda x: x[2][0]) if cust_to_user[id] else None
     )
-    result.append(
+    output.append(
         {
             "customer_name": name,  # The name of the customer
-            "active_user_count": acount,  # The number of active users
-            "inactive_user_count": inacount,  # The number of inactive users
+            "active_user_count": active_count,  # The number of active users
+            "inactive_user_count": inactive_count,  # The number of inactive users
             "active_users": active,  # A list of usernames for active users
             "inactive_users": inactive,  # A list of usernames for inactive users
             "newest_user": newest_user,  # The username of the most recently created user
-            "created_at": cust_created_at,  # The date on which the customer entry was created
+            "created_at": cust_created,  # The date on which the customer entry was created
         }
     )
-json.dumps(result, indent=4)
+import json
+
+print(json.dumps(output, indent=4))
