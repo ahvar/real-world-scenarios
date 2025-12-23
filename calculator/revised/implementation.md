@@ -2,11 +2,10 @@
 
 ## Algorithm
 1. **Parse plans**
- - There are many plan Ids, metal levels, and rates per rate area so read those data into
- a dict with rate area as the keys and plan ids, metal levels, rates, and states as the values. Each line of data in the plans file represents data for one plan id, so put the plan id, metal level, rate, and state in a dict or tuple and store that dict in a list
-2. **Read slcsp** – Store each zip code in slcsp in a dict with zips as keys and values as empty lists to be populated later.
+ - Read plans.csv into dict by state, rate_area; keep only Silver plans
+2. **Read slcsp** – Read slcsp.csv data into a list; preserve order
 
-3. **Read zips** - Read zipcodes into a dict with zipcodes as keys and each value being a list of dicts with each dict representing a line in the zipcode file. If a zipcode spans multiple rate areas the slcsp cannot be determined and that zip will remain blank. 
+3. **Read zips** - Read zips.csv and map zipcodes to all (state, rate_area) pairs
 
 3. **Filter eligible plans** – Identify plans that:
    - Are classified at the **Silver** metal level.
