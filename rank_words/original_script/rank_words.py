@@ -32,21 +32,20 @@ estheses
 import sys
 
 
-def calculate_word_value(word):
+def calculate_word(word):
     total = 0
-    for char in word:
-        if char.isalpha():
-            total += ord(char) - ord("a") + 1
+    for c in word.lower():
+        if c.isalpha():
+            total += ord(c) - ord("a") + 1
     return total
 
 
-if __name__ == "__main__":
-    max_words = int(sys.stdin.readline())
-
-    output = []
-    for count in range(max_words):
-        word = sys.stdin.readline().strip().lower()
-        if calculate_word_value(word) == 100:
-            output.append(word)
-
-    output.sort(key=len)
+count = int(sys.stdin.readline())
+result = []
+for _ in range(count):
+    word = sys.stdin.readline().strip()
+    if calculate_word(word) == 100:
+        result.append(word)
+result.sort(key=len)
+for word in result:
+    print(word)
