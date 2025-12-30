@@ -1,44 +1,58 @@
-""" """
-
 import requests
 import json
 import statistics
+from collections import defaultdict
 from datetime import datetime
-from pathlib import Path
 
 repo_owner = "ahvar"
 repo_name = "data-structures-algorithms"
 url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits?per_page=100"
 
-response = requests.get(url).json()
-# Path("commits_data.json").write_text(json.dumps(response, indent=4))
-monthly_commits = {}
-for obj in response:
 
-    date, message, author = (
-        obj["commit"]["author"]["date"],
-        obj["commit"]["message"],
-        obj["commit"]["author"]["name"],
-    )
-    dt = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
-    month, year = dt.month, dt.year
-    if f"{month}-{year}" not in monthly_commits:
-        monthly_commits[f"{month:02d}-{year}"] = {
-            "commit_count": 1,
-            "messages": [len(message)],
-            "authors": [author],
-        }
-    else:
-        monthly_commits[f"{month}-{year}"]["commit_count"] += 1
-        monthly_commits[f"{month}-{year}"]["message_lengths"].append(len(message))
-        monthly_commits[f"{month}-{year}"]["authors"].append(author)
-output = []
-for month, data in monthly_commits.items():
-    output.append(
-        {
-            "commit_count": data["commit_count"],
-            "date": month,
-            "average_message_length": statistics.mean(data["messages"]),
-            "unique_authors": len(set(data["authors"])),
-        }
-    )
+def get_commit_data():
+    response = requests.get(url)
+    response.raise_for_status()
+    commits = response.json()
+    monthly_commits = defaultdict(list)
+    for commit in commits:
+        commit_data = commit["commit"]
+        date_str = commit_data["author"]["date"]
+        msg = commit_data["message"]
+        author = commit_data["author"].get("email") or commit_data["author"].get("name")
+        dt_date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
+        month_year = datetime.strftime(dt_date, "%m-%Y")
+        monthly_commits[month_year].append(
+            {"date": month_year, "author": author, "message": msg}
+        )
+    return monthly_commits
+
+
+def summarize_commits(commits):
+    summary = []
+    for month, items in commits.items():
+        commit_count = len(items)
+        avg_msg_len = (
+            int(sum(len(x["message"]) for x in items) / commit_count)
+            if commit_count
+            else 0
+        )
+        unique_authors = len(set(x["author"]) for x in items)
+        summary.append(
+            {
+                "date": month,
+                "commit_count": commit_count,
+                "average_message_length": avg_msg_len,
+                "unique_authors": unique_authors,
+            }
+        )
+    return summary
+
+
+if __name__ == "__main__":
+    commits = get_commit_data()
+    summary = summarize_commits(commits)
+    summary.sort(key=lambda x: datetime.strptime(x["date"], "%m-%Y"), reverse=True)
+    headers = {"Content-type": "application/json"}
+    resp = requests.post("some.webhook", data=json.dumps(summary), headers=headers)
+    resp.raise_for_status()
+    print(json.dumps(summary, indent=4))

@@ -33,9 +33,6 @@
 # Your results should be dumped as raw JSON to the console!
 
 
-from collections import defaultdict
-
-
 def get_all_customers() -> list[tuple]:
     return [
         # id, name, created_at
@@ -63,24 +60,38 @@ def get_all_users() -> list[tuple]:
     ]
 
 
-users_by_customers = defaultdict(list)
-for username, customer_id, active, created_at in get_all_users():
-    users_by_customers[customer_id].append((username, active, created_at))
+from collections import defaultdict
 
-results = []
-for id, name, cust_created_at in get_all_customers():
-    customers = users_by_customers.get(id, [])
-    active = [u for u, a, c in customers if a]
-    inactive = [u for u, a, c in customers if not a]
-    newest_user = [max(customers, key=lambda x: x[2])[0] if customers else None]
-    results.append(
-        {
-            "customer_name": name,  # The name of the customer
-            "active_user_count": len(active),  # The number of active users
-            "inactive_user_count": len(inactive),  # The number of inactive users
-            "active_users": active,  # A list of usernames for active users
-            "inactive_users": inactive,  # A list of usernames for inactive users
-            "newest_user": newest_user,  # The username of the most recently created user
-            "created_at": cust_created_at,  # The date on which the customer entry was created
-        }
-    )
+
+def get_users_by_customer():
+    users_by_customer = defaultdict(list)
+    for username, customer_id, active, created_at in get_all_users():
+        users_by_customer[customer_id].append((username, active, created_at))
+    return users_by_customer
+
+
+def get_formatted_customer_results():
+    result = []
+    users_by_customer = get_users_by_customer()
+    for id, name, created_at in get_all_customers():
+        active = [u for u, a, ca in users_by_customer[id] if a]
+        inactive = [u for u, a, ca in users_by_customer[id] if not a]
+        active_count = len(active)
+        inactive_count = len(inactive)
+        newest_user = (
+            max(users_by_customer[id], key=lambda x: x[2])[0]
+            if users_by_customer[id]
+            else None
+        )
+        result.append(
+            {
+                "customer_name": name,  # The name of the customer
+                "active_user_count": active_count,  # The number of active users
+                "inactive_user_count": inactive_count,  # The number of inactive users
+                "active_users": active,  # A list of usernames for active users
+                "inactive_users": inactive,  # A list of usernames for inactive users
+                "newest_user": newest_user,  # The username of the most recently created user
+                "created_at": created_at,  # The date on which the customer entry was created
+            }
+        )
+    return result
