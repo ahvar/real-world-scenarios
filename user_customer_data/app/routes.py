@@ -1,17 +1,6 @@
-from . import app
 from collections import defaultdict
 from flask import render_template
-import json
-
-
-def get_all_customers() -> list[tuple]:
-    return [
-        # id, name, created_at
-        (1, "Custom Inks Inc", "2023-01-01"),
-        (2, "Hog Heaven Oinc", "2023-02-01"),
-        (3, "LL Beam LLC", "2023-03-01"),
-        (4, "Weesnaw's Paddywagons", "2024-01-01"),
-    ]
+from . import app
 
 
 def get_all_users() -> list[tuple]:
@@ -31,32 +20,73 @@ def get_all_users() -> list[tuple]:
     ]
 
 
+def get_all_customers() -> list[tuple]:
+    return [
+        # id, name, created_at
+        (1, "Custom Inks Inc", "2023-01-01"),
+        (2, "Hog Heaven Oinc", "2023-02-01"),
+        (3, "LL Beam LLC", "2023-03-01"),
+        (4, "Weesnaw's Paddywagons", "2024-01-01"),
+    ]
+
+
 @app.route("/")
 @app.route("/index")
 def index():
+    pass
+
+
+@app.route("/users")
+def users() -> list[tuple]:
+    return render_template("users.html", users=get_all_users())
+
+
+@app.route("/customers")
+def get_all_customers() -> list[tuple]:
+    customers = [
+        # id, name, created_at
+        (1, "Custom Inks Inc", "2023-01-01"),
+        (2, "Hog Heaven Oinc", "2023-02-01"),
+        (3, "LL Beam LLC", "2023-03-01"),
+        (4, "Weesnaw's Paddywagons", "2024-01-01"),
+    ]
+    return render_template("customers.html", customers=customers)
+
+
+@app.route("/user_customer_map")
+def map_users_to_customers():
     users_by_customer = defaultdict(list)
     for username, customer_id, active, created_at in get_all_users():
         users_by_customer[customer_id].append((username, active, created_at))
-    result = []
-    for id, name, cust_created_at in get_all_customers():
-        active = [name for u, a, ca in users_by_customer[id] if a]
-        inactive = [name for u, a, ca in users_by_customer[id] if not a]
-        acount = len(active)
-        inacount = len(inactive)
+
+    return render_template(
+        "user_customer_map.html", users_by_customer=users_by_customer
+    )
+
+
+@app.route("/output_format")
+def get_output_data_format(users_by_customer):
+    output = []
+    for id, name, created_at in get_all_customers():
+        active = [u for u, a, ca in users_by_customer[id] if a]
+        inactive = [u for u, a, ca in users_by_customer[id] if not a]
+        active_count = len(active)
+        inactive_count = len(inactive)
         newest_user = (
             max(users_by_customer[id], key=lambda x: x[2])[0]
             if users_by_customer[id]
             else None
         )
-        result.append(
+        output.append(
             {
                 "customer_name": name,  # The name of the customer
-                "active_user_count": acount,  # The number of active users
-                "inactive_user_count": inacount,  # The number of inactive users
+                "active_user_count": active_count,  # The number of active users
+                "inactive_user_count": inactive_count,  # The number of inactive users
                 "active_users": active,  # A list of usernames for active users
                 "inactive_users": inactive,  # A list of usernames for inactive users
                 "newest_user": newest_user,  # The username of the most recently created user
-                "created_at": cust_created_at,  # The date on which the customer entry was created
+                "created_at": created_at,  # The date on which the customer entry was created
             }
         )
-    return render_template("index.html", result=result)
+
+    return render_template("output.html", output=output)

@@ -1,45 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Customer & User Summary</title>
-    <style>
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; }
-        th { background: #f0f0f0; }
-    </style>
-</head>
+<html>
+    <head>
+        <title>Customer User App</title>
+    </head>
 <body>
-    <h1> Customer & User Summary</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Customer Name</th>
-                <th>Active User Count</th>
-                <th>Inactive User Count</th>
-                <th>Active Users</th>
-                <th>Inactive Users</th>
-                <th>Newest User</th>
-                <th>Customer Created At</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in result %}
-            <tr>
-                <td>{{ row.customer_name}}</td>
-                <td>{{ row.active_user_count}}</td>
-                <td>{{ row.inactive_user_count}}</td>
-                <td>
-                    {% for user in row.active_users %}
-                      {{ user }}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                </td>
-                <td>{{ row.newest_user }}</td>
-
-                <td>{{ row.created_at }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h1>Welcome to the Customer User App</h1>
+    <ul>
+        <li><a href="/users">Users</a></li>
+        <li><a href="customers">Customers</a></li>
+        <li><a href="user_customer_map">User-Customer Map</a></li>
+        <li><a href="output_format">Output Format</a></li>
+    </ul>
 </body>
 </html>
