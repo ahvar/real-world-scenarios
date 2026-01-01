@@ -32,6 +32,9 @@
 
 # Your results should be dumped as raw JSON to the console!
 
+from collections import defaultdict
+import json
+
 
 def get_all_customers() -> list[tuple]:
     return [
@@ -60,19 +63,16 @@ def get_all_users() -> list[tuple]:
     ]
 
 
-from collections import defaultdict
-
-
-def get_users_by_customer():
+def map_users_to_customers():
     users_by_customer = defaultdict(list)
     for username, customer_id, active, created_at in get_all_users():
         users_by_customer[customer_id].append((username, active, created_at))
+
     return users_by_customer
 
 
-def get_formatted_customer_results():
-    result = []
-    users_by_customer = get_users_by_customer()
+def get_output_data_format(users_by_customer):
+    output = []
     for id, name, created_at in get_all_customers():
         active = [u for u, a, ca in users_by_customer[id] if a]
         inactive = [u for u, a, ca in users_by_customer[id] if not a]
@@ -83,7 +83,7 @@ def get_formatted_customer_results():
             if users_by_customer[id]
             else None
         )
-        result.append(
+        output.append(
             {
                 "customer_name": name,  # The name of the customer
                 "active_user_count": active_count,  # The number of active users
@@ -94,4 +94,21 @@ def get_formatted_customer_results():
                 "created_at": created_at,  # The date on which the customer entry was created
             }
         )
-    return result
+
+    return output
+
+
+if __name__ == "__main__":
+    users_by_customer = map_users_to_customers()
+    output = get_output_data_format(users_by_customer)
+    print(json.dumps(output, indent=4))
+
+
+class TestCustomerUser:
+
+    def test_map_users_to_customer(self):
+        users_by_customer = map_users_to_customers()
+        assert users_by_customer != None
+        # print(json.dumps(users_by_customer, indent=4))
+        for i in range(1, 5):
+            assert i in users_by_customer
