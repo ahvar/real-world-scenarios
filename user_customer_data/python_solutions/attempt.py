@@ -67,11 +67,10 @@ def map_users_to_customers():
     users_by_customer = defaultdict(list)
     for username, customer_id, active, created_at in get_all_users():
         users_by_customer[customer_id].append((username, active, created_at))
-
     return users_by_customer
 
 
-def get_output_data_format(users_by_customer):
+def process_to_output_format(users_by_customer):
     output = []
     for id, name, created_at in get_all_customers():
         active = [u for u, a, ca in users_by_customer[id] if a]
@@ -94,21 +93,12 @@ def get_output_data_format(users_by_customer):
                 "created_at": created_at,  # The date on which the customer entry was created
             }
         )
-
     return output
-
-
-if __name__ == "__main__":
-    users_by_customer = map_users_to_customers()
-    output = get_output_data_format(users_by_customer)
-    print(json.dumps(output, indent=4))
 
 
 class TestCustomerUser:
 
-    def test_map_users_to_customer(self):
+    def test_map_users_to_customers(self):
         users_by_customer = map_users_to_customers()
-        assert users_by_customer != None
-        # print(json.dumps(users_by_customer, indent=4))
-        for i in range(1, 5):
-            assert i in users_by_customer
+        for id in (1, 2, 3, 4):
+            assert id in users_by_customer
