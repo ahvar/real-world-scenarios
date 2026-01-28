@@ -1,0 +1,7 @@
+Imagine you are about to start a new blog on Python, and you
+plan to register a domain using a Python keyword and the .DEV
+suffix. Write a script using native coroutines that prepends
+a '+' to the domain if it is available. This means your machine
+was able to resolve the domain via DNS. Otherwise, the domain
+did not resolve and may be available.
+

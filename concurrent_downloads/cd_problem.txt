@@ -1,0 +1,9 @@
+Download with asyncio and HTTPX
+
+- The await keyword works with awaitables: native coroutine object, asyncio.Task
+- asyncio.create_task(coroutine_obj) is enough to schedule the coroutine to run
+- await other_coroutine() runs other_coutine() right now and waits for its completion
+- asyncio.Task is a subclass of asyncio.Future; objects with __await__ that returns an iterator
+
+
+
