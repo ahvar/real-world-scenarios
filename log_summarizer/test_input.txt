@@ -1,0 +1,13 @@
+12
+2025-10-14T11:00:00	INFO	auth	User login success for arthur
+2025-10-14T11:00:03	WARN	api.gateway	Slow response from upstream
+2025-10-14T11:00:04	ERROR	api.gateway	Upstream timeout after 30s
+2025-10-14T11:01:00	DEBUG	db	Connection pool size=12
+2025-10-14T11:01:05	INFO	auth	User logout arthur
+2025-10-14T11:02:10	ERROR	db	Query failed: deadlock detected
+2025-10-14T11:02:11	ERROR	db	Query failed: retry limit reached
+2025-10-14T11:03:00	INFO	api.gateway	Request GET /health
+2025-10-14T11:04:00	INFO	api.gateway	Request GET /orders
+2025-10-14T11:05:00	WARN	db	Lock wait exceeded for trx
+2025-10-14T11:06:00	DEBUG	auth	Auth cache refresh ok
+2025-10-14T11:06:30	INFO	db	Maintenance window starts
