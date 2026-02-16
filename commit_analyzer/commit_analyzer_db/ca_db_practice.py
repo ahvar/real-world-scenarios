@@ -137,7 +137,10 @@ def load_commits(conn: sqlite3.Connection, commits):
 
 
 def query_all(conn: sqlite3.Connection, sql: str):
-    pass
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute(sql)
+    return [dict(r) for r in cur.fetchall()]
 
 
 def main():
@@ -164,6 +167,19 @@ def main():
         FROM commits
         GROUP BY month_key, month_label
         ORDER BY month_key DESC
+        """
+
+    # list the 10 most recent commits + message preview
+    recent_commits_sql = """
+        SELECT c.committed_at,
+        a.author_key AS author,
+        SUBSTR(c.message, 1, 80) AS message_preview,
+        c.sha
+        FROM commits c
+        JOIN authors a
+        ON a.id = c.author_id
+        ORDER BY c.commited_at DESC
+        LIMIT 10;
         """
     results = query_all(conn, monthly_summary_sql)
     conn.close()

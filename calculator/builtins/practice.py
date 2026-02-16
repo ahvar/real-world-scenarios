@@ -1,26 +1,27 @@
 import json
+import pprint
 from pathlib import Path
 from collections import defaultdict
 
-slcsp_zipcodes_file = Path(__file__).parent.parent / "data" / "slcsp.csv"
-zipcodes = Path(__file__).parent.parent / "data" / "zips.csv"
-plans_file = Path(__file__).parent.parent / "data" / "plans.csv"
+pp = pprint.PrettyPrinter(indent=4)
 
 
-def get_plan_rates_by_rate_area():
-    plan_rates_by_rate_area = defaultdict(list)
-    with open(plans_file, "r") as plans_in:
+def get_rates_by_rate_area():
+    rates_by_rate_area = defaultdict(list)
+    plans_path = Path(__file__).parent.parent / "data" / "plans.csv"
+    with open(plans_path, "r") as plans_in:
         header = next(plans_in)
         for line in plans_in:
             plan_id, state, metal_level, rate, rate_area = line.strip().split(",")
             if metal_level.lower() == "silver":
-                plan_rates_by_rate_area[(state, rate_area)].append(float(rate))
-    return plan_rates_by_rate_area
+                rates_by_rate_area[(state, rate_area)].append(float(rate))
+    return rates_by_rate_area
 
 
 def get_slcsp_zipcodes():
     slcsp_zipcodes = []
-    with open(slcsp_zipcodes_file, "r") as slcsp_in:
+    slcsp_zipcode_path = Path(__file__).parent.parent / "data" / "slcsp.csv"
+    with open(slcsp_zipcode_path, "r") as slcsp_in:
         header = next(slcsp_in)
         for line in slcsp_in:
             zipcode = line.strip().split(",")[0]
@@ -28,51 +29,60 @@ def get_slcsp_zipcodes():
     return slcsp_zipcodes
 
 
-def get_rate_area_by_zipcode():
+def get_rate_area_zips():
     rate_area_by_zipcode = defaultdict(set)
-    with open(zipcodes, "r") as zip_in:
-        header = next(zip_in)
-        for line in zip_in:
+    rate_areas_path = Path(__file__).parent.parent / "data" / "zips.csv"
+    with open(rate_areas_path, "r") as ra_in:
+        header = next(ra_in)
+        for line in ra_in:
             zipcode, state, cc, name, rate_area = line.strip().split(",")
             rate_area_by_zipcode[zipcode].add((state, rate_area))
     return rate_area_by_zipcode
 
 
-if __name__ == "__main__":
+def calculate_slcsp_premium():
+    rates_by_rate_area = get_rates_by_rate_area()
     slcsp_zipcodes = get_slcsp_zipcodes()
-    rate_area_by_zipcode = get_rate_area_by_zipcode()
-    plan_rate_by_rate_area = get_plan_rates_by_rate_area()
+    rate_area_by_zipcode = get_rate_area_zips()
     output = []
     for zipcode in slcsp_zipcodes:
-        # the zipcode will not be here if there is more than one rate area (e.g. 29745)
         rate_areas = rate_area_by_zipcode.get(zipcode, set())
         if len(rate_areas) != 1:
-            output.append((zipcode, ""))
+            output.append[(zipcode, "")]
             continue
         state, rate_area = next(iter(rate_areas))
-        rates = sorted(set(plan_rate_by_rate_area.get((state, rate_area), [])))
+        rates = sorted(set(rates_by_rate_area[(state, rate_area), []]))
         if len(rates) < 2:
             output.append((zipcode, ""))
         else:
             output.append((zipcode, f"{rates[1]:.2f}"))
 
+    for (
+        zipcode,
+        rate,
+    ) in output:
+        print(f"{zipcode}, {rate}")
+
+
+if __name__ == "__main__":
+    calculate_slcsp_premium()
+
 
 class TestSLCSPCalculator:
 
-    def test_get_plan_rates_by_rate_area(self):
-        plan_rates_by_rate_area = get_plan_rates_by_rate_area()
-
-        for state, rate_area in [("MO", "3"), ("KS", "9"), ("PA", "7")]:
-            assert (state, rate_area) in plan_rates_by_rate_area
+    def test_get_rates_by_rate_area(self):
+        rates_by_rate_area = get_rates_by_rate_area()
+        pp.pprint(rates_by_rate_area)
+        for rate_area in [("MO", "3"), ("KY", "4"), ("PA", "7")]:
+            assert rate_area in rates_by_rate_area
 
     def test_get_slcsp_zipcodes(self):
         slcsp_zipcodes = get_slcsp_zipcodes()
-        for zipcode in ["64148", "67118", "40813"]:
-            assert zipcode in slcsp_zipcodes
+        pp.pprint(slcsp_zipcodes)
+        for zip in ["64148", "40813", "51012"]:
+            assert zip in slcsp_zipcodes
 
-    def test_get_rate_area_by_zipcode(self):
-        rate_area_by_zipcode = get_rate_area_by_zipcode()
-        rate_areas = [3, 9, 4, 7, 2, 5, 8, 6, 12, 7, 4]
-        for zipcode, items in rate_area_by_zipcode.items():
-            state, rate_area = next(iter(items))
-            assert int(rate_area) in rate_areas
+    def test_get_rate_area_zips(self):
+        rate_area_zips = get_rate_area_zips()
+        pp.pprint(rate_area_zips)
+        assert len(rate_area_zips["41101"]) == 1

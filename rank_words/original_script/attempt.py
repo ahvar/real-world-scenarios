@@ -1,27 +1,31 @@
 import sys
 
 
-def calculate_word_value(word):
-    if not word:
-        return 0
+def calculate_word_val(word):
     total = 0
-    for c in word:
-        total += ord(c) - ord("a") + 1
-    if total == 100:
-        return True
-    return False
+    for c in word.lower():
+        if c.isalpha():
+
+            total += ord(c) - ord("a") + 1
+    return total
 
 
-total_count = int(sys.stdin.readline())
-words = []
-for count in range(total_count):
-    word = int(sys.stdin.readline())
-    words.append(word)
+if __name__ == "__main__":
+    output = []
+    input_num = int(sys.stdin.readline())
+    for num in input_num:
+        word = sys.stdin.readline().strip()
+        if calculate_word_val(word) == 100:
+            output.append(word)
+    output.sort(key=len)
+    for word in output:
+        print(word)
 
-target_words = []
-for word in words:
-    if calculate_word_value(word):
-        target_words.append(word)
-target_words.sort(key=len)
-for w in target_words:
-    print(w)
+
+class TestRankWords:
+
+    def test_calculate_word(self):
+        word1 = "ca"
+        word2 = "abc"
+        assert calculate_word_val(word1) == 4
+        assert calculate_word_val(word2) == 6
