@@ -2,8 +2,6 @@
 """Log Summarizer - Analyzes application logs and produces summary statistics."""
 
 import sys
-import re
-from collections import Counter
 from typing import List, Tuple, Optional
 
 
@@ -65,7 +63,7 @@ def parse_log_line(line: str) -> Optional[Tuple[str, str, str, str]]:
 
 def tokenize_message(message: str) -> List[str]:
     """
-    Extract valid words from a log message.
+    Extract valid words from a log message using only builtins.
 
     Rules:
     - Only alphabetic characters (a-z)
@@ -73,11 +71,58 @@ def tokenize_message(message: str) -> List[str]:
     - Minimum length of 3 characters
     - Exclude stopwords
     """
-    # Split on non-alphabetic characters and convert to lowercase
-    words = re.findall(r"[a-zA-Z]+", message.lower())
+    words = []
+    current_word = []
 
-    # Filter: length >= 3 and not in stopwords
-    return [word for word in words if len(word) >= 3 and word not in STOPWORDS]
+    # Manually extract alphabetic characters
+    for char in message.lower():
+        if char.isalpha():
+            current_word.append(char)
+        else:
+            if current_word:
+                word = "".join(current_word)
+                if len(word) >= 3 and word not in STOPWORDS:
+                    words.append(word)
+                current_word = []
+
+    # Don't forget the last word
+    if current_word:
+        word = "".join(current_word)
+        if len(word) >= 3 and word not in STOPWORDS:
+            words.append(word)
+
+    return words
+
+
+def count_items(items: List[str]) -> dict:
+    """
+    Count occurrences of items in a list.
+    Replacement for collections.Counter.
+
+    Returns: dict with item -> count mapping
+    """
+    counts = {}
+    for item in items:
+        counts[item] = counts.get(item, 0) + 1
+    return counts
+
+
+def get_top_n_sorted(counts: dict, n: int) -> List[Tuple[str, int]]:
+    """
+    Get top N items from a count dict, sorted by:
+    1. Count (descending)
+    2. Item name (ascending) for ties
+
+    Returns: List of (item, count) tuples
+    """
+    # Convert dict to list of tuples
+    items = list(counts.items())
+
+    # Sort by count (descending), then by name (ascending)
+    # Using negative count for descending order
+    items.sort(key=lambda x: (-x[1], x[0]))
+
+    return items[:n]
 
 
 def solve(input_stream=sys.stdin, output_stream=sys.stdout):
@@ -87,10 +132,10 @@ def solve(input_stream=sys.stdin, output_stream=sys.stdout):
     # Read number of log lines
     n = int(input_stream.readline().strip())
 
-    # Initialize counters and trackers
-    level_counts = Counter()  # Count of each log level
-    error_by_module = Counter()  # Count of ERROR logs per module
-    word_counts = Counter()  # Word frequency across all messages
+    # Initialize counters and trackers - using dicts instead of Counter
+    level_counts = {}  # Count of each log level
+    error_by_module = {}  # Count of ERROR logs per module
+    all_words = []  # All words for frequency counting
     timestamps = []  # All timestamps for range calculation
 
     # Process each log line
@@ -104,18 +149,18 @@ def solve(input_stream=sys.stdin, output_stream=sys.stdout):
         timestamp, level, module, message = parsed
 
         # Track level counts
-        level_counts[level] += 1
+        level_counts[level] = level_counts.get(level, 0) + 1
 
         # Track ERROR logs by module for noisy module detection
         if level == "ERROR":
-            error_by_module[module] += 1
+            error_by_module[module] = error_by_module.get(module, 0) + 1
 
         # Track timestamps
         timestamps.append(timestamp)
 
-        # Extract and count words from message
+        # Extract words from message
         words = tokenize_message(message)
-        word_counts.update(words)
+        all_words.extend(words)
 
     # --- Output 1: LEVEL_COUNTS ---
     output_stream.write(
@@ -147,12 +192,12 @@ def solve(input_stream=sys.stdin, output_stream=sys.stdout):
         output_stream.write("NOISY_MODULE none\n")
 
     # --- Output 4: TOP_WORDS ---
-    if word_counts:
-        # Get top 5 words, sorted by count (desc) then alphabetically (asc)
-        top_words = word_counts.most_common()
-        # Sort: first by count descending, then by word ascending
-        top_words.sort(key=lambda x: (-x[1], x[0]))
-        top_5 = top_words[:5]
+    if all_words:
+        # Count word frequencies
+        word_counts = count_items(all_words)
+
+        # Get top 5 words
+        top_5 = get_top_n_sorted(word_counts, 5)
 
         word_pairs = [f"{word}={count}" for word, count in top_5]
         output_stream.write(f"TOP_WORDS {', '.join(word_pairs)}\n")
