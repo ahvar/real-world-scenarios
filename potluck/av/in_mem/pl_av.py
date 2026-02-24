@@ -41,10 +41,9 @@ class Potluck:
     def add_dish(self, member_id, dish_name):
         if not self._valid_name(member_id):
             return False
-        
-    def _new_round(self, round_id):
-        
 
+    def _new_round(self, round_id):
+        pass
 
     def _current_round(self):
         return heapq.heappop(self._rounds)
