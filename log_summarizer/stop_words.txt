@@ -1,0 +1,4 @@
+"the","and","for","with","from","this","that","you","your","are","was","were",
+"has","have","had","but","not","can","cannot","cant","will","would","should",
+"could","into","over","under","out","in","on","to","of","by","at","is","it",
+"its","as","be"

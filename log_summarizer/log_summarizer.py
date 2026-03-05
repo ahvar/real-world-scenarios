@@ -1,68 +1,37 @@
 import sys
+from pathlib import Path
+from collections import defaultdict
 from datetime import datetime, timedelta
 
-levels_and_modules = {"debug": None, "info": None, "warn": None, "error": None}
+stop_words_path = Path(__file__).parent / "stop_words.txt"
+stop_words = []
+with open(stop_words_path, "r") as sw_in:
+    for line in sw_in:
+        stop_words.extend(line.strip().split(","))
+    stop_words = [word.strip(' "') for word in stop_words]
+print(stop_words)
 
-first_time = datetime.now()
-last_time = datetime.now()
-stop_words = {
-    "the",
-    "and",
-    "for",
-    "with",
-    "from",
-    "this",
-    "that",
-    "you",
-    "your",
-    "are",
-    "was",
-    "were",
-    "has",
-    "have",
-    "had",
-    "but",
-    "not",
-    "can",
-    "cannot",
-    "cant",
-    "will",
-    "would",
-    "should",
-    "could",
-    "into",
-    "over",
-    "under",
-    "out",
-    "in",
-    "on",
-    "to",
-    "of",
-    "by",
-    "at",
-    "is",
-    "it",
-    "its",
-    "as",
-    "be",
-}
+num_log_lines = int(sys.stdin.readline)
+log_data = defaultdict(list)
+earliest = None
+latest = None
+for ll_count in num_log_lines:
+    timestamp, level, module, message = sys.stdin.readline().strip().split("\t")
+    time_dt = datetime.strptime("%Y-%m-%dT%H:%M:%S")
+    if earliest is None or time_dt < earliest:
+        earliest = time_dt
+    if latest is None or time_dt > latest:
+        latest = time_dt
 
+    log_data[level].append(
+        {
+            "timestamp": datetime.strptime("%Y-%m-%dT%H:%M:%S"),
+            "module": module,
+            "message": message,
+        }
+    )
 
-def set_time_range(date_dt):
-
-    duration = timedelta(days=date_dt.day, hours=date_dt.hour, minutes=date_dt.minutes)
-    if duration > first_time:
-        first_time = duration
-    if duration < last_time:
-        last_time = duration
-
-
-def read_input():
-    log_line_count = int(sys.stdin.readline())
-    for _ in log_line_count:
-        timestamp, level, module, msg = sys.stdin.readline().strip().split("\t")
-        date_dt = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
-
-
-def solve(input_stream=sys.stdin, output_stream=sys.stdout):
-    n = int(input_stream.readline().strip())
+# noisy module
+module_levels = defaultdict(list)
+for level, data in log_data.items():
+    module_levels.append(data["module"])
