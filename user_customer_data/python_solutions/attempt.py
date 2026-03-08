@@ -62,41 +62,29 @@ def get_all_users() -> list[tuple]:
 
 from collections import defaultdict
 
+users_by_customer = defaultdict(list)
+for username, customer_id, active, created_at in get_all_users():
+    users_by_customer[customer_id].append((username, active, created_at))
 
-def organize_users_by_customer() -> defaultdict:
-    users_by_customer = defaultdict(list)
-    for username, customer_id, active, created_at in get_all_users():
-        users_by_customer[customer_id].append((username, active, created_at))
-    return users_by_customer
-
-
-def format_user_customer_output(users_by_customer):
-    output = []
-    for id, name, created_at in get_all_customers():
-        active = [u for u, a, ca in users_by_customer[id] if a]
-        inactive = [u for u, a, ca in users_by_customer[id] if not a]
-        newest_user = (
-            max(users_by_customer[id], key=lambda x: x[2])[0]
-            if users_by_customer[id]
-            else None
-        )
-        output.append(
-            {
-                "customer_name": name,  # The name of the customer
-                "active_user_count": len(active),  # The number of active users
-                "inactive_user_count": len(inactive),  # The number of inactive users
-                "active_users": active,  # A list of usernames for active users
-                "inactive_users": inactive,  # A list of usernames for inactive users
-                "newest_user": newest_user,  # The username of the most recently created user
-                "created_at": created_at,  # The date on which the customer entry was created
-            },
-        )
-    return output
-
-
-class TestCustomerUser:
-
-    def test_organize_users_by_customer(self):
-        users_by_customer = organize_users_by_customer()
-        for customer_id in [1, 2, 3, 4]:
-            assert customer_id in users_by_customer
+output = []
+for id, name, created_at in get_all_customers():
+    active = [u for u, a, ca in users_by_customer[id] if a]
+    inactive = [u for u, a, ca in users_by_customer[id] if not a]
+    active_count = len(active)
+    inactive_count = len(inactive)
+    newest_user = (
+        max(users_by_customer[id], key=lambda x: x[2])[0]
+        if users_by_customer[id]
+        else None
+    )
+    output.append(
+        {
+            "customer_name": name,  # The name of the customer
+            "active_user_count": active_count,  # The number of active users
+            "inactive_user_count": inactive_count,  # The number of inactive users
+            "active_users": active,  # A list of usernames for active users
+            "inactive_users": inactive,  # A list of usernames for inactive users
+            "newest_user": str,  # The username of the most recently created user
+            "created_at": str,  # The date on which the customer entry was created
+        },
+    )
