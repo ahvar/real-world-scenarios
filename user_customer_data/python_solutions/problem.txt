@@ -1,0 +1,32 @@
+# Transform the user and customer data into the format specified output data format.
+
+# **Input Data Formats**
+
+#     Customers
+#       - id: int           -- The customer's ID
+#       - name: str         -- The customer's name
+#       - created_at: str   -- The date on which the customer entry was created, an ISO string
+
+#     Users
+#       - username: str      -- The user's username
+#       - customer_id: int   -- The ID of the customer to which the user belongs
+#       - active: bool       -- Whether or not the user is active
+#       - created_at: str    -- The date on which the user entry was created, an ISO string
+
+# **Output Data Format**
+
+# ```
+# [
+#     {
+#         "customer_name": str,        # The name of the customer
+#         "active_user_count": int,    # The number of active users
+#         "inactive_user_count": int,  # The number of inactive users
+#         "active_users": list[str],   # A list of usernames for active users
+#         "inactive_users": list[str], # A list of usernames for inactive users
+#         "newest_user": str,          # The username of the most recently created user
+#         "created_at": str,           # The date on which the customer entry was created
+#     }, ...
+# ]
+# ```
+
+# Your results should be dumped as raw JSON to the console!

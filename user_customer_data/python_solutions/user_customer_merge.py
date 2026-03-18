@@ -61,30 +61,30 @@ def get_all_users() -> list[tuple]:
     ]
 
 
+from collections import defaultdict
+
+users_by_customer = defaultdict(list)
+for username, customer_id, active, created_at in get_all_users():
+    users_by_customer[customer_id].append((username, active, created_at))
+
 output = []
-for customer in get_all_customers():
-    id, name, created_at = customer
-    output_obj = {
-        "customer_name": name,
-        "created_at": created_at,
-        "active_user_count": 0,
-        "inactive_user_count": 0,
-        "active_users": [],
-        "inactive_users": [],
-        "newest_user": None,
-    }
-    most_recent_user = ""
-    for user in get_all_users():
-        username, customer_id, active, user_created_at = user
-        if customer_id == id:
-            if active:
-                output_obj["active_user_count"] += 1
-                output_obj["active_users"].append(username)
-            else:
-                output_obj["inactive_user_count"] += 1
-                output_obj["inactive_users"].append(username)
-            if user_created_at > most_recent_user:
-                output_obj["newest_user"] = username
-                most_recent_user = user_created_at
-    output.append(output_obj)
-print(json.dumps(output, indent=4))
+for id, name, created_at in get_all_customers():
+    active = [u for u, a, ca in users_by_customer[id] if a]
+    inactive = [u for u, a, ca in users_by_customer[id] if not a]
+    most_recent = (
+        max(users_by_customer[id], key=lambda x: x[2])[0]
+        if users_by_customer[id]
+        else None
+    )
+    output.append(
+        {
+            "customer_name": str,  # The name of the customer
+            "active_user_count": int,  # The number of active users
+            "inactive_user_count": int,  # The number of inactive users
+            "active_users": list[str],  # A list of usernames for active users
+            "inactive_users": list[str],  # A list of usernames for inactive users
+            "newest_user": str,  # The username of the most recently created user
+            "created_at": str,  # The date on which the customer entry was created
+        },
+        ...,
+    )
