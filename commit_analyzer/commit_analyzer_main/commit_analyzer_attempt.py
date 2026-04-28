@@ -1,48 +1,55 @@
-import sys
-import json
 import requests
-from datetime import datetime
+import json
 from collections import defaultdict
+from datetime import datetime
 
 
-def get_commit_data(repo_owner, repo_name):
-    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits?per_page=100"
-    resp = requests.get(url)
-    resp.raise_for_status()
-    commits = resp.json()
-    monthly_commits = defaultdict(list)
-    for commit in commits:
-        commit_data = commit["commit"]
-        date_str = commit_data["author"]["date"]
-        msg = commit_data["message"]
-        author = commit_data["author"].get("name") or commit_data["author"].get("email")
-        date_dt = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
-        month_year = datetime.strftime(date_dt, "%Y-%m")
-        monthly_commits[month_year].append(
-            {"date": date_str, "author": author, "message": msg}
-        )
-    return monthly_commits
+class CommitAnalyzer:
+
+    def __init__(self):
+        self._repo_owner = "ahvar"
+        self._repo_name = "ahvar.github.io"
+        self._commits = {}
+        self._commits_by_month = defaultdict(list)
+
+    def load_commits(self):
+        url = f"https://api.github.com/repos/{self._repo_owner}/{self._repo_name}/commits?per_page=100"
+        resp = requests.get(url)
+        resp.raise_for_status()
+        self._commits = resp.json()
+
+    def load_date_msg_author_from_commits(self):
+        if not self._commits:
+            return
+        for commit in self._commits:
+            commit_data = commit["commit"]
+            date_str = commit_data["author"]["date"]
+            msg = commit_data["message"]
+            author = commit_data["author"]["name"] or commit_data["author"]["email"]
+            date_dt = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
+            month_year = datetime.strftime(date_dt, "%Y-%m")
+            self._commits_by_month[month_year].append(
+                {"date": date_str, "msg": msg, "author": author}
+            )
+
+    @property
+    def commits(self):
+        return self._commits
+
+    @property
+    def commits_by_month(self):
+        return self._commits_by_month
 
 
-def compute_metrics(monthly_commits):
-    metrics = []
-    for month_year, commits in monthly_commits.items():
-        commit_count = len(commits)
-        avg_msg_len = sum(len(commit["message"]) for commit in commits) // commit_count
-        unique_authors = len(set(commit["author"] for commit in commits))
-        metrics.append(
-            {
-                "date": month_year,
-                "average_message_length": avg_msg_len,
-                "unique_authors": unique_authors,
-            }
-        )
-    return metrics
+class TestAnalyzer:
+    def setup_method(self):
+        self.commit_analyzer = CommitAnalyzer()
 
+    def test_load_commits(self):
+        self.commit_analyzer.load_commits()
+        assert self.commit_analyzer.commits != None
 
-if __name__ == "__main__":
-    repo_owner = sys.stdin.readline().strip()
-    repo_name = sys.stdin.readline().strip()
-    monthly_commits = get_commit_data(repo_owner, repo_name)
-    metrics = compute_metrics(monthly_commits)
-    print(json.dumps(metrics, indent=4))
+    def test_load_month_year(self):
+        self.commit_analyzer.load_commits()
+        self.commit_analyzer.load_date_msg_author_from_commits()
+        print(json.dumps(self.commit_analyzer.commits_by_month, indent=4))
