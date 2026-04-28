@@ -1,4 +1,5 @@
-# Transform the user and customer data into the format specified output data format.
+# Transform the user and customer data into the format
+specified output data format.
 
 # **Input Data Formats**
 
