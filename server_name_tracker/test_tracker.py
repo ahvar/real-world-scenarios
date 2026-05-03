@@ -1,6 +1,6 @@
 import unittest
 
-from server_name_tracker.tracker_practice import SilentTracker, NonSilentTracker
+from server_name_tracker.main.tracker_practice import SilentTracker, NonSilentTracker
 
 
 class TestTrackers(unittest.TestCase):

@@ -1,26 +1,39 @@
 from collections import Counter
 
 
-def solution(clean, dirty, k):
-    c = Counter(clean)
-    d = Counter(dirty)
-    clean_pairs = 0
-    clean_unpaired = {}
-    dirty_pairs = 0
-    for color, count in c.items():
-        clean_pairs += count // 2
-        if count % 2 == 1:
-            clean_unpaired[color] = 1
+class Laundry:
 
-    for color in list(clean_unpaired.keys()):
-        if k > 0 and d.get(color, 0) > 0:
-            clean_pairs += 1
-            k -= 1
-            d[color] -= 1
-            del clean_unpaired[color]
+    def solution(self, clean, dirty, k):
+        clean_count = Counter(clean)
+        dirty_count = Counter(dirty)
+        pairs = 0
+        unpaired_count = {}
+        for color, count in clean_count.items():
+            pairs += count // 2
+            unpaired = count % 2
+            if unpaired:
+                unpaired_count[color] = 1
 
-    for color, count in d.items():
-        while k >= 2 and count >= 2:
-            pairs += 1
-            k -= 2
-            count -= 2
+        for color, count in dirty_count.items():
+            dirty_pairs = count // 2
+            dirty_unpaired = count % 2
+
+            while k > 0 and dirty_pairs > 0:
+                pairs += 1
+                k -= 2
+                dirty_pairs -= 2
+
+            if dirty_unpaired:
+                while k > 0 and unpaired_count.get(color, 0) > 0:
+                    pairs += 1
+                    unpaired_count[color] -= 1
+                    k -= 1
+        return pairs
+
+
+class TestLaundry:
+    def setup_method(self):
+        self.laundry = Laundry()
+
+    def test_solution(self):
+        assert self.laundry.solution([1, 2, 1, 1], [1, 4, 3, 2, 4], 2) == 3
