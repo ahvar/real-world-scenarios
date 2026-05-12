@@ -15,7 +15,7 @@ class Twitter:
         self._time += 1
 
     def get_news_feed(self, user_id):
-        candidates = self._following.get(user_id, {})
+        candidates = self._following.get(user_id)
         candidates.add(user_id)
         heap = []
         for candidate in candidates:
@@ -23,16 +23,17 @@ class Twitter:
             if not tweets:
                 continue
             idx = len(tweets) - 1
-            t, tw = tweets[idx]
+            t, tw = tweets[idx]  # most recent tweet
             heapq.heappush(heap, (-t, tw, candidate, idx - 1))
         feed = []
-        while heap and len(feed) < self._limit:
-            net_t, tw, author_id, next_idx = heapq.heappop()
+        while heap and len(feed) < self._feed_limit:
+            neg_t, tw, candidate, next_idx = heapq.heappop()
             feed.append(tw)
 
             if next_idx >= 0:
-                t2, tw2 = self._tweets[author_id][next_idx]
-                heapq.heappush(heap, (-t2, tw2, author_id, next_idx - 1))
+                t2, tw2 = self._tweets[candidate][next_idx]
+                heapq.heappush(heap, (-t2, tw2, candidate, next_idx - 1))
+        return feed
 
     def follow(self, follower_id, followee_id):
         if follower_id == followee_id:

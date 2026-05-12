@@ -3,37 +3,32 @@ from collections import Counter
 
 class Laundry:
 
-    def solution(self, clean, dirty, k):
-        clean_count = Counter(clean)
-        dirty_count = Counter(dirty)
-        pairs = 0
-        unpaired_count = {}
-        for color, count in clean_count.items():
-            pairs += count // 2
-            unpaired = count % 2
-            if unpaired:
-                unpaired_count[color] = 1
+    def __init__(self, clean, dirty, k):
+        self._clean = Counter(clean)
+        self._dirty = Counter(dirty)
+        self._k = k
 
-        for color, count in dirty_count.items():
-            dirty_pairs = count // 2
-            dirty_unpaired = count % 2
+    def wash(self):
+        clean_pairs = 0
+        clean_unpaired = 0
+        dirty_pairs = 0
+        dirty_unpaired = 0
+        # increment clean pairs
+        for color, count in self._clean.items():
+            clean_pairs += count // 2  # divide by 2 to get pairs
+            if clean_unpaired % 2 == 1:  # modulo by 2 to get remainder
+                clean_unpaired += 1
+        # increment dirty pairs
+        for color, count in self._dirty.items():
+            dirty_pairs += count // 2
+            if dirty_unpaired % 2 == 1:
+                dirty_unpaired += 1
+            # if find this color in clean socks
+            if self._clean.get(color, 0) != 0:
+                while dirty_pairs and self._k > 0:
+                    dirty_pairs -= 1
+                    self._k -= 2
+                    clean_pairs += 1
 
-            while k > 0 and dirty_pairs > 0:
-                pairs += 1
-                k -= 2
-                dirty_pairs -= 2
-
-            if dirty_unpaired:
-                while k > 0 and unpaired_count.get(color, 0) > 0:
-                    pairs += 1
-                    unpaired_count[color] -= 1
-                    k -= 1
-        return pairs
-
-
-class TestLaundry:
-    def setup_method(self):
-        self.laundry = Laundry()
-
-    def test_solution(self):
-        assert self.laundry.solution([1, 2, 1, 1], [1, 4, 3, 2, 4], 2) == 3
+                while dirty_unpaired > 0 and self._clean_unpaired > 0 and self._k > 0:
+                    dirty_unpaired -= 1
