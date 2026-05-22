@@ -1,42 +1,43 @@
-from enum import Enum
-from typing import List, Optional
-
-
-class DiscColor(Enum):
-    RED = "RED"
-    YELLOW = "YELLOW"
+from typing import Optional
+from player import DiscColor
 
 
 class Board:
-    def __init__(self, rows: int = 6, cols: int = 7):
-        self.rows = rows
-        self.cols = cols
-        self.grid: List[List[Optional[DiscColor]]] = [
-            [None] * cols for _ in range(rows)
-        ]
+
+    def __init__(self, rows, cols):
+        self._rows = rows
+        self._cols = cols
+        self._grid = [[None] * cols for _ in range(rows)]
 
     def get_rows(self):
-        return self.rows
+        return self._rows
 
     def get_cols(self):
-        return self.cols
+        return self._cols
 
-    def can_place(self, column: int):
-        if column < 0 or column >= self.cols:
+    def can_place(self, column):
+        if column < 0 or column >= self._cols:
             return False
-        return self.grid[0][column] is None
+        if None not in self.get_cols():
+            return False
 
-    def place_disc(self, column: int, color: DiscColor):
-        if not self.can_place(column):
-            return -1
-        for row in range(self.rows - 1, -1, -1):
-            if self.grid[row][column] is None:
-                self.grid[row][column] = color
-                return row
-        return -1
+    def place_disc(self, col, color: DiscColor):
+
+        rows = self.get_rows()
+        curr = 0
+        while curr < rows:
+            if self.get_cell(curr, col) == None:
+                self._grid[curr][col] = color
+
+    def check_win(self, color, col):
+        pass
 
     def is_full(self):
         pass
 
-    def get_cell(self, row: int, col: int):
+    def get_cell(self, row: int, col: int) -> Optional[DiscColor]:
         pass
+
+    @property
+    def board(self):
+        return self._board
