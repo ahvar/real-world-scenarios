@@ -5,8 +5,8 @@ import heapq
 class Twitter:
 
     def __init__(self):
-        self._following = defaultdict(set)
         self._tweets = defaultdict(list)
+        self._following = defaultdict(set)
         self._time = 0
         self._limit = 10
 
@@ -15,24 +15,30 @@ class Twitter:
         self._time += 1
 
     def get_news_feed(self, user_id):
+        # followees and the user
         candidates = self._following.get(user_id)
         candidates.add(user_id)
+
         heap = []
         for candidate in candidates:
             tweets = self._tweets.get(candidate, [])
             if not tweets:
                 continue
+            # point to the last (most recent) tweet
             idx = len(tweets) - 1
-            t, tw = tweets[idx]  # most recent tweet
+            t, tw = tweets[idx]
+            # add it to a max heap by making the time negative
+            # which will sort it to the top of the heap
+            # now you have a heap of the last tweets of all followees
             heapq.heappush(heap, (-t, tw, candidate, idx - 1))
         feed = []
-        while heap and len(feed) < self._feed_limit:
+        while heap and len(feed) < self._limit:
             neg_t, tw, candidate, next_idx = heapq.heappop()
             feed.append(tw)
 
             if next_idx >= 0:
                 t2, tw2 = self._tweets[candidate][next_idx]
-                heapq.heappush(heap, (-t2, tw2, candidate, next_idx - 1))
+                heapq.heappush(heap, (-t2, tw2, candidate, idx - 1))
         return feed
 
     def follow(self, follower_id, followee_id):
@@ -43,4 +49,5 @@ class Twitter:
     def unfollow(self, follower_id, followee_id):
         if follower_id == followee_id:
             return
+
         self._following[follower_id].discard(followee_id)
