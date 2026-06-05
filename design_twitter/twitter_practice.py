@@ -5,41 +5,36 @@ import heapq
 class Twitter:
 
     def __init__(self):
-        self._tweets = defaultdict(list)
         self._following = defaultdict(set)
-        self._time = 0
+        self._tweets = defaultdict(list)
         self._limit = 10
+        self._time = 0
 
     def post_tweet(self, user_id, tweet_id):
         self._tweets[user_id].append((self._time, tweet_id))
         self._time += 1
 
     def get_news_feed(self, user_id):
-        # followees and the user
-        candidates = self._following.get(user_id)
-        candidates.add(user_id)
+        followees_and_user = self._following.get(user_id, set())
+        followees_and_user.add(user_id)
 
         heap = []
-        for candidate in candidates:
-            tweets = self._tweets.get(candidate, [])
+        for user in followees_and_user:
+            tweets = self._tweets.get(user, [])
             if not tweets:
                 continue
-            # point to the last (most recent) tweet
+
             idx = len(tweets) - 1
             t, tw = tweets[idx]
-            # add it to a max heap by making the time negative
-            # which will sort it to the top of the heap
-            # now you have a heap of the last tweets of all followees
-            heapq.heappush(heap, (-t, tw, candidate, idx - 1))
+            heapq.heappush((-t, tw, user, idx - 1))
+
         feed = []
         while heap and len(feed) < self._limit:
-            neg_t, tw, candidate, next_idx = heapq.heappop()
+            neg_t, tw, user, idx = heapq.heappop()
             feed.append(tw)
-
-            if next_idx >= 0:
-                t2, tw2 = self._tweets[candidate][next_idx]
-                heapq.heappush(heap, (-t2, tw2, candidate, idx - 1))
-        return feed
+            if idx > 0:
+                t, tw = tweets[idx - 1]
+                heapq.heappush((-t, tw, user, idx - 1))
 
     def follow(self, follower_id, followee_id):
         if follower_id == followee_id:
@@ -49,5 +44,4 @@ class Twitter:
     def unfollow(self, follower_id, followee_id):
         if follower_id == followee_id:
             return
-
         self._following[follower_id].discard(followee_id)
