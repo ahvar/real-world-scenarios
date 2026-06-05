@@ -1,66 +1,110 @@
 from enum import Enum
-from typing import Set, List
-from dataclasses import dataclass
 
 
 class Direction(Enum):
-    UP = 1
-    DOWN = 2
-    IDLE = 3
+    UP = "UP"
+    DOWN = "DOWN"
+    IDLE = "IDLE"
 
 
 class RequestType(Enum):
-    PICKUP_UP = 1
-    PICKUP_DOWN = 2
-    DESTINATION = 3
+    PICKUP_UP = "PICKUP_UP"
+    PICKUP_DOWN = "PICKUP_DOWN"
+    DESTINATION = "DESTINATION"
+
 
 class Request:
-    def __init__(self, floor: int, type: RequestType):
-        self.floor = floor
-        self.type = type
-    
-    def get_floor(self) -> int:
-        return self.floor
-    
-    def get_type(self) -> RequestType:
-        return self.type
+    def __init__(self, floor, type):
+        self._floor = floor
+        self._type = type
+
+    @property
+    def floor(self):
+        return self._floor
+
+    @property
+    def type(self):
+        return self._type
 
     def __eq__(self, other):
-        if not isinstance(other, Request):
-            return False
-        return self.floor == other.floor and self.type == other.type
+        return self._floor == other.floor and self._type == other.type
 
     def __hash__(self):
-        return hash((self.floor, self.type))
+        return hash((self._floor, self._type))
 
 
 class Elevator:
-
     def __init__(self):
         self._current_floor = 0
-        self._direction = Direction.IDLE
         self._requests = set()
+        self._direction = Direction.IDLE
 
-    def add_request(self, request: RequestType) -> bool:
-        pass
+    def add_request(self, request):
+        if not 0 <= request.floor <= 9:
+            return False
+        if request.floor == self._current_floor:
+            return True
+        if request in self._requests:
+            return False
+        self._requests.add(request)
+        return True
 
     def step(self):
+        if not self._requests:
+            self._direction = Direction.IDLE
+            return
+        if self._direction == Direction.IDLE:
+            closest = sorted(
+                (r for r in self._requests),
+                key=lambda x: abs(x.floor - self._current_floor),
+            )[0]
+
+    def has_requests_ahead(self, direction):
         pass
+
+    def has_requests_at_or_beyond(self, floor, direction):
+        pass
+
+    @property
+    def current_floor(self):
+        return self._current_floor
+
+    @property
+    def direction(self):
+        return self._direction
+
+    @property
+    def requests(self):
+        return self._requests
 
 
 class ElevatorController:
 
     def __init__(self):
-        self._elevators: List[Elevator] = []
+        self._elevators = [Elevator()] * 3
 
-    def request_elevator(self, floor, request_type):
-        if floor < 0 or floor > 9:
-            return False
-        if request_type == 
+    def request_elevator(self, floor, type):
+        if not isinstance(type, RequestType):
+            return
+        request = Request(floor, type)
+        elevator = self.select_best_elevator(request)
+        elevator.add_request(request)
 
-    def request_destination(self, elevator_id, floor) -> bool:
+    def step(self):
+        pass
+
+    def select_best_elevator(self, request) -> Elevator:
+        pass
+
+    def find_committed_to_floor(self, request):
+        pass
+
+    def find_nearest_idle(self, floor):
+        pass
+
+    def find_nearest(self, floor):
         pass
 
 
-class ElevatorUser:
-    pass
+if __name__ == "__main__":
+    controller = ElevatorController()

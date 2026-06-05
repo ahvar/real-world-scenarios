@@ -60,29 +60,35 @@ def get_all_users() -> list[tuple]:
     ]
 
 
-from collections import defaultdict
+if __name__ == "__main__":
+    import json
+    from collections import defaultdict
 
-users_by_customer = defaultdict(list)
-for username, customer_id, active, ca in get_all_users():
-    users_by_customer[customer_id].append((username, active, ca))
+    users_by_customer = defaultdict(list)
+    for username, customer_id, active, created_at in get_all_users():
+        users_by_customer[customer_id].append([username, active, created_at])
 
-output = []
-for id, name, created_at in get_all_customers():
-    active = [u for u, a, ca in users_by_customer[id] if a]
-    inactive = [u for u, a, ca in users_by_customer[id] if not a]
-    newest = (
-        max(users_by_customer[id], key=lambda x: x[2])[0]
-        if users_by_customer[id]
-        else None
-    )
-    output.append(
-        {
-            "customer_name": name,
-            "active": active,
-            "inactive": inactive,
-            "active_user_count": len(active),
-            "inactive_user_count": len(inactive),
-            "newest_user": newest,
-            "created_at": created_at,
-        }
-    )
+    output = []
+    for id, name, ca in get_all_customers():
+        active_users = [
+            u for u, a, ca in users_by_customer[id] if id in users_by_customer and a
+        ]
+        inactive_users = [
+            u for u, a, ca in users_by_customer[id] if id in users_by_customer and not a
+        ]
+        newest_user = sorted(
+            (u for u, a, ca in users_by_customer[id]), key=lambda x: x[2]
+        )[0]
+        output.append(
+            {
+                "customer_name": name,
+                "active_user_count": len(active_users),
+                "inactive_user_count": len(inactive_users),
+                "active_users": active_users,
+                "inactive_users": inactive_users,
+                "newest_user": newest_user,
+                "created_at": ca,
+            }
+        )
+
+    print(json.dumps(output, indent=4))
